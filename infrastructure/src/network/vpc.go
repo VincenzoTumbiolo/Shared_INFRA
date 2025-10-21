@@ -46,7 +46,7 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 
 	// --- Public Subnets (2 AZs) ---
 	azs := []string{"eu-central-1a", "eu-central-1b"}
-	publicCidrs := []string{cidr, getSubnetCdir(baseNetwork, "1.0", subnetRangeNetwork)}
+	publicCidrs := []string{getSubnetCdir(baseNetwork, "0.0", subnetRangeNetwork), getSubnetCdir(baseNetwork, "1.0", subnetRangeNetwork)}
 	privateCidrs := []string{getSubnetCdir(baseNetwork, "10.0", subnetRangeNetwork), getSubnetCdir(baseNetwork, "11.0", subnetRangeNetwork)}
 	isolatedCidrs := []string{getSubnetCdir(baseNetwork, "20.0", subnetRangeNetwork), getSubnetCdir(baseNetwork, "21.0", subnetRangeNetwork)}
 
