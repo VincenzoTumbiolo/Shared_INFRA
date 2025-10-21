@@ -12,6 +12,7 @@ env:
   BASE_FOLDER_NAME: shared-infra
   GIT_TERMINAL_PROMPT: 1
   PULUMI_BUCKET: vtechstudio-infrastructure-state
+  PULUMI_CONFIG_PASSPHRASE: dummy
 
 jobs:
   pulumi-deploy:
