@@ -3,7 +3,7 @@ module github.com/VincenzoTumbiolo/Shared_INFRA
 go 1.24.2
 
 require (
-	github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package v0.0.5
+	github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package v0.0.7
 	github.com/pulumi/pulumi/sdk/v3 v3.200.0
 	github.com/stretchr/testify v1.10.0
 )

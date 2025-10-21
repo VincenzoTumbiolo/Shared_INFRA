@@ -18,9 +18,9 @@ func GetDefaultTags(env Environments) map[string]string {
 		InfraManagedBy:       "VincenzoTumbiolo",
 		ApplicationManagedBy: "VincenzoTumbiolo",
 		ProjectOwner:         "VTechStudio",
-		Project:              "PsycoAPP",
+		Project:              "SharedInfra",
 		CreatedBy:            env.CreatedBy,
-		ProjectPrefix:        strings.Replace(env.ProjectPrefix, "-", "_", -1),
+		ProjectPrefix:        strings.ReplaceAll(env.ProjectPrefix, "-", "_"),
 		Suffix:               "D",
 	}
 
