@@ -72,12 +72,12 @@ jobs:
 
       - name: Select or create stack
         run: |
-          cd pulumi-infra
+          cd infrastructure
           pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}
           pulumi stack --show-urns
 
       - name: Pulumi up
         run: |
-          cd pulumi-infra
+          cd infrastructure
           pulumi refresh --yes
           pulumi up --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} --yes
