@@ -21,16 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      contents: write
+      contents: read
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.PAT_TO_CLONE_REPO }}
       - name: Set Environments
         run: |
           echo "${{ secrets.DEV_ENV_FILE_EU_CENTRAL_1 }}" > $GITHUB_ENV
+          echo "${{ secrets.DEV_ENV_FILE_EU_CENTRAL_1 }}" >> .env
 
       - name: Assume role using OIDC
         uses: aws-actions/configure-aws-credentials@v1-node16
@@ -51,6 +50,9 @@ jobs:
           cat > /home/runner/.netrc << EOF
             machine github.com login ${GO_TOKEN}
           EOF
+
+      - name: Setup Pulumi
+        uses: pulumi/actions@v4
 
       - name: Login to Pulumi backend
         run: pulumi login s3://${{ env.PULUMI_BUCKET }}
