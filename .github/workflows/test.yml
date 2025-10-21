@@ -60,12 +60,12 @@ jobs:
       - name: Select or create stack
         run: |
           cd infrastructure
-          pulumi stack select organization/${{ env.TF_VAR_project_prefix }}/${{ env.TF_VAR_env }} || pulumi stack init organization/${{ env.TF_VAR_project_prefix }}/${{ env.TF_VAR_env }}
+          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}
           pulumi stack --show-urns
 
       - name: Pulumi preview
         run: |
           cd infrastructure
           pulumi refresh --yes
-          pulumi --stack organization/${{ env.TF_VAR_project_prefix }}/${{ env.TF_VAR_env }} preview
+          pulumi --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} preview
           pulumi stack --show-urns
