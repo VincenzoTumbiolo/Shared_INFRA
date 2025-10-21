@@ -5,12 +5,10 @@ on:
     branches: [develop]
 
 env:
-  IS_TEST: "TRUE"
   AWS_EC2_METADATA_DISABLED: "true"
-  BASE_FOLDER_NAME: a1p-fittingdata-dumper
-  BASE_FOLDER_LAMBDA: modules/lambda
-  TF_VAR_project_prefix: amplifon_json_manager
+  BASE_FOLDER_NAME: shared-infra
   GIT_TERMINAL_PROMPT: 1
+  PULUMI_BUCKET: vtechstudio-infrastructure-state
   PULUMI_CONFIG_PASSPHRASE: dummy
 
 jobs:
