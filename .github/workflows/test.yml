@@ -1,0 +1,198 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - pre-dev
+      - "feat**"
+      - "fix**"
+      - "job**"
+
+env:
+  IS_TEST: "TRUE"
+  AWS_EC2_METADATA_DISABLED: "true"
+  BASE_FOLDER_NAME: a1p-fittingdata-dumper
+  BASE_FOLDER_LAMBDA: modules/lambda
+  TF_VAR_project_prefix: amplifon_json_manager
+  GIT_TERMINAL_PROMPT: 1
+  PULUMI_CONFIG_PASSPHRASE: dummy
+
+jobs:
+  sys-test:
+    name: System Test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: Set Environments
+        run: |
+          echo "${{ secrets.DEV_ENV_FILE_EU_CENTRAL_1 }}" > $GITHUB_ENV
+
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_TO_CLONE_REPO }}
+
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_TO_CLONE_REPO }}
+          repository: Amplifon-X/AmplifonX-Terraform-Commons
+          ref: staging
+          path: 'infrastructure/commons'
+
+      - name: Assume role using OIDC
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          role-to-assume: ${{ env.DEPLOYER_ROLE_ARN }}
+          aws-region: ${{ env.AWS_DEPLOY_REGION }}
+
+      - uses: actions/setup-go@v4
+        name: Setup Go
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Set token for Go
+        env:
+          GO_TOKEN: ${{ secrets.GO_TOKEN }}
+        run: |
+          export GOPRIVATE=github.com/amplifon-x
+          cat > /home/runner/.netrc << EOF
+            machine github.com login ${GO_TOKEN}
+          EOF
+
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v1.1.0
+        with:
+          terragrunt_version: "v0.51.0" # most stable version
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.9.7" # most stable version
+
+      - name: Local Deploy Infrastructure Test
+        run: |
+          make dev-init
+          make dev-plan
+
+      - name: Run System Test
+        run: echo Run your commands test here
+
+  pulumi-sys-test:
+    name: Pulumi System Test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_TO_CLONE_REPO }}
+      - name: Set Environments
+        run: |
+          echo "${{ secrets.DEV_ENV_FILE_EU_CENTRAL_1 }}" > $GITHUB_ENV
+
+      - name: Assume role using OIDC
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          role-to-assume: ${{ env.DEPLOYER_ROLE_ARN }}
+          aws-region: ${{ env.AWS_DEPLOY_REGION }}
+
+      - uses: actions/setup-go@v4
+        name: Setup Go
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Set token for Go
+        env:
+          GO_TOKEN: ${{ secrets.GO_TOKEN }}
+        run: |
+          export GOPRIVATE=github.com/amplifon-x
+          cat > /home/runner/.netrc << EOF
+            machine github.com login ${GO_TOKEN}
+          EOF
+      - name: Get DB Secrets
+        env:
+          SECRET_NAME: ${{ env.SECRET_NAME }}
+          AWS_REGION: ${{ env.AWS_REGION}}
+        run: |
+          cd pulumi-infra
+          secrets=$(go run ./cmd/secrets/main.go)
+          host=$(echo $secrets | jq -r .host)
+          port=$(echo $secrets | jq -r .port)
+          username=$(echo $secrets | jq -r .username)
+          password=$(echo $secrets | jq -r .password)
+          echo "DB_ENDPOINT=${host}:${port}" >> $GITHUB_ENV
+          echo "TF_VAR_mainUsername=${username}" >> $GITHUB_ENV
+          echo "TF_VAR_mainPassword=${password}" >> $GITHUB_ENV
+          echo "DEBUG DB_ENDPOINT=${host}:${port}"
+          echo "DEBUG TF_VAR_mainUsername=${username}"
+
+      - name: Login to Pulumi backend
+        run: pulumi login s3://${{ env.PULUMI_BUCKET }}
+
+      - name: Select or create stack
+        run: |
+          cd pulumi-infra
+          pulumi stack select organization/${{ env.TF_VAR_project_prefix }}/${{ env.TF_VAR_env }} || pulumi stack init organization/${{ env.TF_VAR_project_prefix }}/${{ env.TF_VAR_env }}
+          pulumi stack --show-urns
+
+      - name: Pulumi preview
+        run: |
+          cd pulumi-infra
+          pulumi refresh --yes
+          pulumi --stack organization/${{ env.TF_VAR_project_prefix }}/${{ env.TF_VAR_env }} preview
+          pulumi stack --show-urns
+
+  lambda-test:
+    name: Lambda Test
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_TO_CLONE_REPO }}
+
+      - name: Checkout repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_TO_CLONE_REPO }}
+          repository: Amplifon-X/AmplifonX-Terraform-Commons
+          path: 'infrastructure/commons'
+
+      - name: Set up Docker Compose
+        run: |
+          docker compose -f "infrastructure/modules/lambda/dumper_management/docker-compose.yml" up -d --build 
+
+      - name: Wait for services to be ready
+        run: |
+          until curl -s http://localhost:27017; do
+            echo "Waiting for services to be ready..."
+            sleep 5
+          done
+        timeout-minutes: 5
+
+      - name: Run get_dumper test
+        run: |
+          cd infrastructure/modules/lambda/dumper_management/get_dumper
+          go test ./... -v
+
+      - name: Run put_dumper test
+        run: |
+          cd infrastructure/modules/lambda/dumper_management/put_dumper
+          go test ./... -v
+
+      - name: Run basic_auth test
+        run: |
+          cd infrastructure/modules/lambda/auth/basic_auth
+          go test ./... -v
