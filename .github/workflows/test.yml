@@ -1,8 +1,12 @@
 name: Test
 
 on:
-  pull_request:
-    branches: [develop]
+  push:
+    branches:
+      - pre-dev
+      - "feat**"
+      - "fix**"
+      - "job**"
 
 env:
   AWS_EC2_METADATA_DISABLED: "true"
@@ -17,16 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      contents: write
+      contents: read
 
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.PAT_TO_CLONE_REPO }}
       - name: Set Environments
         run: |
           echo "${{ secrets.DEV_ENV_FILE_EU_CENTRAL_1 }}" > $GITHUB_ENV
+          echo "${{ secrets.DEV_ENV_FILE_EU_CENTRAL_1 }}" >> .env
 
       - name: Assume role using OIDC
         uses: aws-actions/configure-aws-credentials@v1-node16
@@ -48,18 +51,21 @@ jobs:
             machine github.com login ${GO_TOKEN}
           EOF
 
+      - name: Setup Pulumi
+        uses: pulumi/actions@v4
+
       - name: Login to Pulumi backend
         run: pulumi login s3://${{ env.PULUMI_BUCKET }}
 
       - name: Select or create stack
         run: |
           cd infrastructure
-          pulumi stack select organization/${{ env.TF_VAR_project_prefix }}/${{ env.TF_VAR_env }} || pulumi stack init organization/${{ env.TF_VAR_project_prefix }}/${{ env.TF_VAR_env }}
+          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}
           pulumi stack --show-urns
 
       - name: Pulumi preview
         run: |
           cd infrastructure
           pulumi refresh --yes
-          pulumi --stack organization/${{ env.TF_VAR_project_prefix }}/${{ env.TF_VAR_env }} preview
+          pulumi --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} preview
           pulumi stack --show-urns
