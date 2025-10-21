@@ -1,0 +1,83 @@
+name: Deploy Infrastructure with Pulumi
+
+on:
+  push:
+    branches:
+      - "development**"
+      - "stag**"
+      - "prod**"
+
+env:
+  AWS_EC2_METADATA_DISABLED: "true"
+  BASE_FOLDER_NAME: shared-infra
+  GIT_TERMINAL_PROMPT: 1
+  PULUMI_BUCKET: vtechstudio-infrastructure-state
+
+jobs:
+  pulumi-deploy:
+    name: Pulumi Deploy
+    runs-on: ubuntu-latest
+    if: always()
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Environment variables - Development
+        if: contains(github.ref_name, 'dev')
+        run: |
+          echo "${{ secrets.DEV_ENV_FILE_EU_CENTRAL_1 }}" > $GITHUB_ENV
+          echo "${{ secrets.DEV_ENV_FILE_EU_CENTRAL_1 }}" >> .env
+
+      - name: Environment variables - Staging
+        if: contains(github.ref_name, 'stag')
+        run: |
+          echo "${{ secrets.STAGING_ENV_FILE_EU_CENTRAL_1 }}" > $GITHUB_ENV
+          echo "${{ secrets.STAGING_ENV_FILE_EU_CENTRAL_1 }}" >> .env
+
+      - name: Environment variables - Production
+        if: contains(github.ref_name, 'prod')
+        run: |
+          echo "${{ secrets.PROD_ENV_FILE_EU_CENTRAL_1 }}" > $GITHUB_ENV
+          echo "${{ secrets.PROD_ENV_FILE_EU_CENTRAL_1 }}" >> .env
+
+      - name: Assume role using OIDC
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          role-to-assume: ${{ env.DEPLOYER_ROLE_ARN }}
+          aws-region: ${{ env.AWS_DEPLOY_REGION }}
+
+      - uses: actions/setup-go@v4
+        name: Setup Go
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Set token for Go
+        env:
+          GO_TOKEN: ${{ secrets.GO_TOKEN }}
+        run: |
+          export GOPRIVATE=github.com/amplifon-x
+          cat > /home/runner/.netrc << EOF
+            machine github.com login ${GO_TOKEN}
+          EOF
+
+      - name: Setup Pulumi
+        uses: pulumi/actions@v4
+
+      - name: Login to Pulumi backend
+        run: pulumi login s3://${{ env.PULUMI_BUCKET }}
+
+      - name: Select or create stack
+        run: |
+          cd pulumi-infra
+          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}
+          pulumi stack --show-urns
+
+      - name: Pulumi up
+        run: |
+          cd pulumi-infra
+          pulumi refresh --yes
+          pulumi up --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} --yes
