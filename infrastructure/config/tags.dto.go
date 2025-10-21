@@ -40,19 +40,19 @@ func GetDefaultTags(env Environments) map[string]string {
 }
 
 func SubnetGroupNameTag(defaultTags pulumi.StringMap) pulumi.String {
-	return pulumi.String(fmt.Sprintf("%sSubgroup%s", defaultTags["ProjectPrefix"], defaultTags["Environment"]))
+	return pulumi.String(fmt.Sprintf("%s%sSubgroup", defaultTags["ProjectPrefix"], defaultTags["Environment"]))
 }
 
 func DBNameTag(defaultTags pulumi.StringMap, tpe string, index *int) pulumi.StringOutput {
-	return pulumi.String(fmt.Sprintf("%sDatabase%s", defaultTags["ProjectPrefix"], defaultTags["Environment"])).ToStringOutput()
+	return pulumi.String(fmt.Sprintf("%s%sDatabase", defaultTags["ProjectPrefix"], defaultTags["Environment"])).ToStringOutput()
 }
 
 func VPCNameTag(defaultTags pulumi.StringMap) pulumi.String {
-	return pulumi.String(fmt.Sprintf("%sVpc%s", defaultTags["ProjectPrefix"], defaultTags["Environment"]))
+	return pulumi.String(fmt.Sprintf("%s%sVpc", defaultTags["ProjectPrefix"], defaultTags["Environment"]))
 }
 
 func IGWNameTag(defaultTags pulumi.StringMap) pulumi.String {
-	return pulumi.String(fmt.Sprintf("%sIgw%s", defaultTags["ProjectPrefix"], defaultTags["Environment"]))
+	return pulumi.String(fmt.Sprintf("%s%sIgw", defaultTags["ProjectPrefix"], defaultTags["Environment"]))
 }
 
 func SubnetNameTag(defaultTags pulumi.StringMap, visibility SubnetVisibility) pulumi.String {
