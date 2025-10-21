@@ -1,12 +1,8 @@
 name: Test
 
 on:
-  push:
-    branches:
-      - pre-dev
-      - "feat**"
-      - "fix**"
-      - "job**"
+  pull_request:
+    branches: [develop]
 
 env:
   IS_TEST: "TRUE"
@@ -41,7 +37,7 @@ jobs:
           token: ${{ secrets.PAT_TO_CLONE_REPO }}
           repository: Amplifon-X/AmplifonX-Terraform-Commons
           ref: staging
-          path: 'infrastructure/commons'
+          path: "infrastructure/commons"
 
       - name: Assume role using OIDC
         uses: aws-actions/configure-aws-credentials@v1-node16
@@ -89,7 +85,6 @@ jobs:
       contents: write
 
     steps:
-
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
@@ -168,11 +163,11 @@ jobs:
         with:
           token: ${{ secrets.PAT_TO_CLONE_REPO }}
           repository: Amplifon-X/AmplifonX-Terraform-Commons
-          path: 'infrastructure/commons'
+          path: "infrastructure/commons"
 
       - name: Set up Docker Compose
         run: |
-          docker compose -f "infrastructure/modules/lambda/dumper_management/docker-compose.yml" up -d --build 
+          docker compose -f "infrastructure/modules/lambda/dumper_management/docker-compose.yml" up -d --build
 
       - name: Wait for services to be ready
         run: |

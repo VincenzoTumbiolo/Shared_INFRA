@@ -1,8 +1,11 @@
 name: Deploy Infrastructure with Pulumi
 
 on:
-  pull_request:
-    branches: [develop]
+  push:
+    branches:
+      - "development**"
+      - "stag**"
+      - "prod**"
 
 env:
   AWS_EC2_METADATA_DISABLED: "true"
