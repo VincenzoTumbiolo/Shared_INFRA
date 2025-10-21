@@ -18,7 +18,8 @@ type VpcOut struct {
 	NatGateway      pulumi.StringOutput
 }
 
-func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName string, cidr string) error {
+func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName string, baseNetwork string, rangeNetwork string) error {
+	cidr := fmt.Sprintf("%s.0.0/%s", baseNetwork, rangeNetwork)
 	// --- VPC ---
 	vpc, err := ec2.NewVpc(ctx, baseName, &ec2.VpcArgs{
 		CidrBlock:          pulumi.String(cidr),
@@ -45,9 +46,9 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 
 	// --- Public Subnets (2 AZs) ---
 	azs := []string{"eu-central-1a", "eu-central-1b"}
-	publicCidrs := []string{"10.10.0.0/24", "10.10.1.0/24"}
-	privateCidrs := []string{"10.10.10.0/24", "10.10.11.0/24"}
-	isolatedCidrs := []string{"10.10.20.0/24", "10.10.21.0/24"}
+	publicCidrs := []string{cidr, getSubnetCdir(baseNetwork, "1.0", rangeNetwork)}
+	privateCidrs := []string{getSubnetCdir(baseNetwork, "10.0", rangeNetwork), getSubnetCdir(baseNetwork, "11.0", rangeNetwork)}
+	isolatedCidrs := []string{getSubnetCdir(baseNetwork, "20.0", rangeNetwork), getSubnetCdir(baseNetwork, "21.0", rangeNetwork)}
 
 	publicSubnets := []pulumi.StringOutput{}
 	privateSubnets := []pulumi.StringOutput{}
@@ -167,4 +168,8 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 	}
 
 	return nil
+}
+
+func getSubnetCdir(baseNetwork string, subnetNetwork string, rangeNetwork string) string {
+	return fmt.Sprintf("%s.%s/%s", baseNetwork, subnetNetwork, rangeNetwork)
 }

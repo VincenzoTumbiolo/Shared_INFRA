@@ -13,7 +13,7 @@ import (
 func Infrastructure(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, env config.Environments) error {
 	baseName := fmt.Sprintf("%s-%s", env.Env, env.ProjectPrefix)
 
-	err := network.NewNetwork(ctx, mod, baseName, "10.182.0.0/24")
+	err := network.NewNetwork(ctx, mod, baseName, "10.10", "24")
 	if err != nil {
 		return err
 	}
