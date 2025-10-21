@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	vtechpulumi "github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/rest"
-	"github.com/VincenzoTumbiolo/PsicoApp_INFRA/config"
-	"github.com/VincenzoTumbiolo/PsicoApp_INFRA/src"
+	"github.com/VincenzoTumbiolo/Shared_INFRA/config"
+	"github.com/VincenzoTumbiolo/Shared_INFRA/src"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 

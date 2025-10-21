@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	vtechpulumi "github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/rest"
-	"github.com/VincenzoTumbiolo/PsicoApp_INFRA/config"
+	"github.com/VincenzoTumbiolo/Shared_INFRA/config"
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )

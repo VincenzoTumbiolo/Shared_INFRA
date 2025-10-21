@@ -1,4 +1,4 @@
-module github.com/VincenzoTumbiolo/PsicoApp_INFRA
+module github.com/VincenzoTumbiolo/Shared_INFRA
 
 go 1.24.2
 
