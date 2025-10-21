@@ -1,3 +1,3 @@
-name: amplifon_json_manager
+name: shared_infra
 runtime: go
-description: "Progetto Pulumi per amplifon_json_manager"
+description: "Progetto Pulumi per shared infrastructure"
