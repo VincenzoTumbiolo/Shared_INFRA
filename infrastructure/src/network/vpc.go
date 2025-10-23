@@ -78,16 +78,6 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 		return err
 	}
 
-	nat, err := ec2.NewNatGateway(ctx, baseName+"-nat", &ec2.NatGatewayArgs{
-		AllocationId: eip.ID(),
-		SubnetId:     pulumi.StringOutput{}, // da riempire dopo con la prima public subnet
-		Tags:         pulumi.StringMap{"Name": pulumi.String(baseName + "-nat")},
-	}, pulumi.DependsOn([]pulumi.Resource{igw}))
-	if err != nil {
-		return err
-	}
-
-	// --- Creazione Subnet & Route Tables ---
 	for i := range azs {
 		// PUBLIC
 		pub, err := ec2.NewSubnet(ctx, fmt.Sprintf("%s-public-%d", baseName, i+1), &ec2.SubnetArgs{
@@ -113,7 +103,18 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 		if err != nil {
 			return err
 		}
+	}
 
+	nat, err := ec2.NewNatGateway(ctx, baseName+"-nat", &ec2.NatGatewayArgs{
+		AllocationId: eip.ID(),
+		SubnetId:     publicSubnets[0], // da riempire dopo con la prima public subnet
+		Tags:         pulumi.StringMap{"Name": pulumi.String(baseName + "-nat")},
+	}, pulumi.DependsOn([]pulumi.Resource{igw}))
+	if err != nil {
+		return err
+	}
+
+	for i := range azs {
 		// PRIVATE
 		priv, err := ec2.NewSubnet(ctx, fmt.Sprintf("%s-private-%d", baseName, i+1), &ec2.SubnetArgs{
 			VpcId:            vpc.ID(),
