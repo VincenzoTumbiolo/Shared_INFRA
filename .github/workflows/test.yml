@@ -60,7 +60,7 @@ jobs:
       - name: Select or create stack - network
         run: |
           cd network
-          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}
+          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/network || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}
           pulumi stack --show-urns
 
       - name: Pulumi preview - network
