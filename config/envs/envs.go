@@ -18,7 +18,7 @@ type Environments struct {
 	//LOAD BALANCER
 	AlbListenerPort         int    `env:"VAR_albListenerPort" default:"443"`
 	AlbListenerProtocol     string `env:"VAR_albListenerProtocol" default:"HTTPS"`
-	CertificateId           string `env:"VAR_certificateArn"`
+	CertificateId           string `env:"VAR_httpsCertificateId"`
 	NlbListenerPort         int    `env:"VAR_nlbListenerPort" default:"443"`
 	NlbListenerProtocol     string `env:"VAR_nlbListenerProtocol" default:"TCP"`
 	NlbTgPort               int    `env:"VAR_nlbTgPort" default:"443"`
