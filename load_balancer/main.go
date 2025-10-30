@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 
-	vtechpulumi "github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/rest"
-	"github.com/VincenzoTumbiolo/Shared_INFRA/config"
-	"github.com/VincenzoTumbiolo/Shared_INFRA/src"
+	vtech_aws "github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/modules/aws"
+	"github.com/VincenzoTumbiolo/Shared_INFRA_config/envs"
+	"github.com/VincenzoTumbiolo/Shared_INFRA_config/tags"
+	"github.com/VincenzoTumbiolo/Shared_INFRA_load_balancer/src"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -17,7 +18,7 @@ func deploy(ctx *pulumi.Context) error {
 	fmt.Println("Config")
 	environments, environmentsMap, defaultTags := setConfig()
 
-	vtechpulumiMod := vtechpulumi.New(
+	vtechpulumiMod := vtech_aws.New(
 		ctx,
 		defaultTags,
 		environmentsMap,
@@ -33,11 +34,11 @@ func deploy(ctx *pulumi.Context) error {
 	return nil
 }
 
-func setConfig() (config.Environments, pulumi.StringMap, pulumi.StringMap) {
+func setConfig() (envs.Environments, pulumi.StringMap, pulumi.StringMap) {
 
-	environments, mapEnv := config.GetEnvironments()
+	environments, mapEnv := envs.GetEnvironments()
 
-	defaultTags := config.GetDefaultTags(environments)
+	defaultTags := tags.GetDefaultTags(environments)
 
 	return environments, pulumi.ToStringMap(mapEnv), pulumi.ToStringMap(defaultTags)
 }

@@ -3,22 +3,14 @@ package network
 import (
 	"fmt"
 
-	vtechpulumi "github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/rest"
-	"github.com/VincenzoTumbiolo/Shared_INFRA/config"
+	vtech_aws "github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/modules/aws"
+	"github.com/VincenzoTumbiolo/Shared_INFRA_config/dto"
+	"github.com/VincenzoTumbiolo/Shared_INFRA_config/tags"
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-type VpcOut struct {
-	VpcId           pulumi.StringOutput
-	PublicSubnets   pulumi.StringArrayOutput
-	PrivateSubnets  pulumi.StringArrayOutput
-	IsolatedSubnets pulumi.StringArrayOutput
-	InternetGateway pulumi.StringOutput
-	NatGateway      pulumi.StringOutput
-}
-
-func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName string, baseNetwork string, rangeNetwork string, subnetRangeNetwork string) error {
+func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, baseNetwork string, rangeNetwork string, subnetRangeNetwork string) (*dto.VpcOut, error) {
 	cidr := fmt.Sprintf("%s.0.0/%s", baseNetwork, rangeNetwork)
 	// --- VPC ---
 	vpc, err := ec2.NewVpc(ctx, baseName, &ec2.VpcArgs{
@@ -26,22 +18,22 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 		EnableDnsSupport:   pulumi.Bool(true),
 		EnableDnsHostnames: pulumi.Bool(true),
 		Tags: pulumi.StringMap{
-			"Name": config.ServiceNameTag("Vpc", baseName),
+			"Name": tags.ServiceNameTag("Vpc", baseName),
 		},
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// --- Internet Gateway ---
 	igw, err := ec2.NewInternetGateway(ctx, baseName+"-igw", &ec2.InternetGatewayArgs{
 		VpcId: vpc.ID(),
 		Tags: pulumi.StringMap{
-			"Name": config.ServiceNameTag("Igw", baseName),
+			"Name": tags.ServiceNameTag("Igw", baseName),
 		},
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// --- Public Subnets (2 AZs) ---
@@ -64,22 +56,22 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 			},
 		},
 		Tags: pulumi.StringMap{
-			"Name": config.ServiceNameTag("PublicRt", baseName),
+			"Name": tags.ServiceNameTag("PublicRt", baseName),
 		},
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// --- EIP + NAT per private subnets ---
 	eip, err := ec2.NewEip(ctx, baseName+"-eip", &ec2.EipArgs{
 		Domain: pulumi.String("vpc"),
 		Tags: pulumi.StringMap{
-			"Name": config.ServiceNameTag("Eip", baseName),
+			"Name": tags.ServiceNameTag("Eip", baseName),
 		},
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for i := range azs {
@@ -90,12 +82,12 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 			AvailabilityZone:    pulumi.String(azs[i]),
 			MapPublicIpOnLaunch: pulumi.Bool(true),
 			Tags: pulumi.StringMap{
-				"Name": config.ServiceNameTag(fmt.Sprintf("PublicSub%d", i+1), baseName),
+				"Name": tags.ServiceNameTag(fmt.Sprintf("PublicSub%d", i+1), baseName),
 				"Tier": pulumi.String("public"),
 			},
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 		publicSubnets = append(publicSubnets, pub.ID().ToStringOutput())
 
@@ -105,7 +97,7 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 			SubnetId:     pub.ID(),
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
@@ -113,11 +105,11 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 		AllocationId: eip.ID(),
 		SubnetId:     publicSubnets[0],
 		Tags: pulumi.StringMap{
-			"Name": config.ServiceNameTag("Nat", baseName),
+			"Name": tags.ServiceNameTag("Nat", baseName),
 		},
 	}, pulumi.DependsOn([]pulumi.Resource{igw}))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for i := range azs {
@@ -127,12 +119,12 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 			CidrBlock:        pulumi.String(privateCidrs[i]),
 			AvailabilityZone: pulumi.String(azs[i]),
 			Tags: pulumi.StringMap{
-				"Name": config.ServiceNameTag(fmt.Sprintf("PrivateSub%d", i+1), baseName),
+				"Name": tags.ServiceNameTag(fmt.Sprintf("PrivateSub%d", i+1), baseName),
 				"Tier": pulumi.String("private"),
 			},
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 		privateSubnets = append(privateSubnets, priv.ID().ToStringOutput())
 
@@ -145,11 +137,11 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 				},
 			},
 			Tags: pulumi.StringMap{
-				"Name": config.ServiceNameTag(fmt.Sprintf("PrivateRt%d", i+1), baseName),
+				"Name": tags.ServiceNameTag(fmt.Sprintf("PrivateRt%d", i+1), baseName),
 			},
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		_, err = ec2.NewRouteTableAssociation(ctx, fmt.Sprintf("%s-rtassoc-private-%d", baseName, i+1), &ec2.RouteTableAssociationArgs{
@@ -157,7 +149,7 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 			SubnetId:     priv.ID(),
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		// ISOLATED
@@ -166,17 +158,27 @@ func NewNetwork(ctx *pulumi.Context, mod *vtechpulumi.RESTModule, baseName strin
 			CidrBlock:        pulumi.String(isolatedCidrs[i]),
 			AvailabilityZone: pulumi.String(azs[i]),
 			Tags: pulumi.StringMap{
-				"Name": config.ServiceNameTag(fmt.Sprintf("IsolatedSub%d", i+1), baseName),
+				"Name": tags.ServiceNameTag(fmt.Sprintf("IsolatedSub%d", i+1), baseName),
 				"Tier": pulumi.String("isolated"),
 			},
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 		isolatedSubnets = append(isolatedSubnets, iso.ID().ToStringOutput())
 	}
 
-	return nil
+	return &dto.VpcOut{
+		VpcId:           igw.VpcId,                                   // pulumi.StringOutput
+		PublicSubnets:   pulumi.ToStringArrayOutput(publicSubnets),   // pulumi.StringArrayOutput
+		PrivateSubnets:  pulumi.ToStringArrayOutput(privateSubnets),  // pulumi.StringArrayOutput
+		IsolatedSubnets: pulumi.ToStringArrayOutput(isolatedSubnets), // pulumi.StringArrayOutput
+		PublicCidrs:     publicCidrs,
+		PrivateCidrs:    privateCidrs,
+		IsolatedCidrs:   isolatedCidrs,
+		InternetGateway: igw.Arn,                // pulumi.StringOutput
+		NatGateway:      nat.NetworkInterfaceId, // pulumi.StringOutput
+	}, nil
 }
 
 func getSubnetCdir(baseNetwork string, subnetNetwork string, rangeNetwork string) string {

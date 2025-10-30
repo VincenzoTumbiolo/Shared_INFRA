@@ -1,9 +1,9 @@
-module github.com/VincenzoTumbiolo/Shared_INFRA
+module github.com/VincenzoTumbiolo/Shared_INFRA_network
 
 go 1.24.2
 
 require (
-	github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package v0.0.7
+	github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package v0.3.5
 	github.com/pulumi/pulumi/sdk/v3 v3.200.0
 	github.com/stretchr/testify v1.10.0
 )
@@ -18,6 +18,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.3 // indirect
+	github.com/VincenzoTumbiolo/Shared_INFRA_config v0.0.0-00010101000000-000000000000
 	github.com/aead/chacha20 v0.0.0-20180709150244-8b13a72661da // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
@@ -97,3 +98,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/frand v1.4.2 // indirect
 )
+
+replace github.com/VincenzoTumbiolo/Shared_INFRA_config => ../config

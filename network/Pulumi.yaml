@@ -1,0 +1,3 @@
+name: shared
+runtime: go
+description: "Progetto Pulumi per shared infrastructure"

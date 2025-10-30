@@ -57,15 +57,28 @@ jobs:
       - name: Login to Pulumi backend
         run: pulumi login s3://${{ env.PULUMI_BUCKET }}
 
-      - name: Select or create stack
+      - name: Select or create stack - network
         run: |
-          cd infrastructure
-          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}
+          cd network
+          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/network || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/network
           pulumi stack --show-urns
 
-      - name: Pulumi preview
+      - name: Pulumi preview - network
         run: |
-          cd infrastructure
+          cd network
           pulumi refresh --yes
-          pulumi --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} preview
+          pulumi --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/network preview
+          pulumi stack --show-urns
+
+      - name: Select or create stack - load_balancer
+        run: |
+          cd load_balancer
+          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/load_balancer || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/load_balancer
+          pulumi stack --show-urns
+
+      - name: Pulumi preview - load_balancer
+        run: |
+          cd load_balancer
+          pulumi refresh --yes
+          pulumi --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/load_balancer preview
           pulumi stack --show-urns
