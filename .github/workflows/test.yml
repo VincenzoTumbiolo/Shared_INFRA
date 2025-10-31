@@ -70,6 +70,12 @@ jobs:
           pulumi --stack organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }} preview
           pulumi stack --show-urns
 
+      - name: Get Pulumi Output - Network Infrastructure
+        id: pulumi_outputs
+        run: |
+          echo "SHARED_VPC_ID=test" >> $GITHUB_ENV
+          echo "PRIVATE_SUBNETS=test1,test2" >> $GITHUB_ENV
+
       - name: Select or create stack - load_balancer
         run: |
           cd load_balancer
