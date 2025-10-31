@@ -46,7 +46,9 @@ func CreateElasticLoadBalancers(ctx *pulumi.Context, baseName string, env envs.E
 		},
 		Tags: defaultTags,
 	})
-	account, err := elb.GetServiceAccount(ctx, nil, nil)
+	account, err := elb.GetServiceAccount(ctx, &elb.GetServiceAccountArgs{
+		Region: &env.Region,
+	}, nil)
 	if err != nil {
 		return nil, err
 	}
