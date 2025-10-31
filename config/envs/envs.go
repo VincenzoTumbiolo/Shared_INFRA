@@ -26,8 +26,8 @@ type Environments struct {
 	NlbListenerRulePriority int    `env:"VAR_nlbListenerRulePriority" default:"49999"`
 
 	// COMPUTED ENVS
-	VpcId            *string `env:"SHARED_VPC_ID"`
-	PrivateSubnetIds *string `env:"PRIVATE_SUBNETS"`
+	VpcId            string `env:"SHARED_VPC_ID" default:"empty"`
+	PrivateSubnetIds string `env:"PRIVATE_SUBNETS" default:"empty"`
 }
 
 func GetEnvironments() (Environments, map[string]string) {

@@ -25,7 +25,7 @@ func CreateElasticLoadBalancers(ctx *pulumi.Context, baseName string, env envs.E
 	sgName := fmt.Sprintf("%s-lb-sg", baseName)
 
 	sg, err := vtech_network.CreateSecurityGroup(ctx, sgName, vtech_aws_dto.SecurityGroupArgs{
-		VpcID: env.VpcId,
+		VpcID: &env.VpcId,
 		Ingress: []vtech_aws_dto.SecurityGroupRule{
 			{
 				Protocol:    "TCP",
