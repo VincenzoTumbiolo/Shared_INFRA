@@ -46,7 +46,9 @@ func CreateElasticLoadBalancers(ctx *pulumi.Context, baseName string, env envs.E
 		},
 		Tags: defaultTags,
 	})
-	account, err := elb.GetServiceAccount(ctx, nil, nil)
+	account, err := elb.GetServiceAccount(ctx, &elb.GetServiceAccountArgs{
+		Region: &env.Region,
+	}, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -182,8 +184,8 @@ func CreateElasticLoadBalancers(ctx *pulumi.Context, baseName string, env envs.E
 		HealthCheckPath:               "/healtcheck",
 		HealthCheckPort:               fmt.Sprintf("%d", in.AlbListenerPort),
 		HealthCheckProtocol:           in.AlbListenerProtocol,
-		HealthCheckHealthyThreshold:   0, // → default AWS
-		HealthCheckUnhealthyThreshold: 0, // → default AWS
+		HealthCheckHealthyThreshold:   5, // → default AWS
+		HealthCheckUnhealthyThreshold: 2, // → default AWS
 		HealthCheckMatcher:            "200-399",
 
 		Tags: in.Tags,

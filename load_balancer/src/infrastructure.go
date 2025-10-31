@@ -24,7 +24,7 @@ func Infrastructure(ctx *pulumi.Context, mod *vtech_aws.AWSModule, env envs.Envi
 		return errors.New("ERROR | Missing Vpc Id")
 	}
 	vpc, err := ec2.LookupVpc(ctx, &ec2.LookupVpcArgs{
-		Id: pulumi.StringRef(env.VpcId), // o un'altra logica
+		Default: pulumi.BoolRef(true),
 	})
 	if err != nil {
 		return err

@@ -70,11 +70,11 @@ jobs:
           pulumi --stack organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }} preview
           pulumi stack --show-urns
 
-      - name: Get Pulumi Output - Network Infrastructure
+      - name: Get Pulumi Output - Network Infrastructure - Default for Tests
         id: pulumi_outputs
         run: |
-          echo "SHARED_VPC_ID=test" >> $GITHUB_ENV
-          echo "PRIVATE_SUBNETS=test1,test2" >> $GITHUB_ENV
+          echo "SHARED_VPC_ID=$DEFAULT_VPC_TEST" >> $GITHUB_ENV
+          echo "PRIVATE_SUBNET=$DEFAULT_SUBNET_TEST" >> $GITHUB_ENV
 
       - name: Select or create stack - load_balancer
         run: |
