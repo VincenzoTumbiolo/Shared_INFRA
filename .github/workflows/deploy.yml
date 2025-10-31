@@ -71,14 +71,37 @@ jobs:
       - name: Login to Pulumi backend
         run: pulumi login s3://${{ env.PULUMI_BUCKET }}
 
-      - name: Select or create stack
+      - name: Select or create stack - Network Infrastructure
         run: |
-          cd infrastructure
-          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}
+          cd network
+          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_network || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_network
           pulumi stack --show-urns
 
-      - name: Pulumi up
+      - name: Pulumi up - Network Infrastructure
         run: |
-          cd infrastructure
+          cd network
           pulumi refresh --yes
-          pulumi up --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }} --yes
+          pulumi up --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_network --yes
+
+      - name: Get Pulumi Output - Network Infrastructure
+        id: pulumi_outputs
+        if: startsWith(github.ref, 'refs/heads/prod')
+        run: |
+          cd pulumi-infra
+          pulumi stack output --json > outputs.json
+          VPC_ID=$(jq -r .vpcId outputs.json)
+          PRIVATE_SUBNETS_CSV=$(jq -r '.privateSubnets | join(",")' outputs.json)
+          echo "SHARED_VPC_ID=$VPC_ID" >> $GITHUB_ENV
+          echo "PRIVATE_SUBNETS=$PRIVATE_SUBNETS_CSV" >> $GITHUB_ENV
+
+      - name: Select or create stack - Load Balancer Infrastructure
+        run: |
+          cd load_balancer
+          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_load_balancer || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_load_balancer
+          pulumi stack --show-urns
+
+      - name: Pulumi up - Load Balancer Infrastructure
+        run: |
+          cd load_balancer
+          pulumi refresh --yes
+          pulumi up --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_load_balancer --yes

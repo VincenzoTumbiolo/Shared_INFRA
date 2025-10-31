@@ -1,4 +1,4 @@
-package config
+package tags
 
 import (
 	"encoding/json"
@@ -8,10 +8,11 @@ import (
 	"unicode"
 
 	"github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/config/tags"
+	"github.com/VincenzoTumbiolo/Shared_INFRA_config/envs"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
-func GetDefaultTags(env Environments) map[string]string {
+func GetDefaultTags(env envs.Environments) map[string]string {
 	e := tags.DefaultTags{
 		CreationDate:         env.CreatedAt,
 		Environment:          "Dev",
