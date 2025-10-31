@@ -89,7 +89,7 @@ jobs:
           cd network
           pulumi stack output --json > outputs.json
           VPC_ID=$(jq -r .vpcId outputs.json)
-          PRIVATE_SUBNETS_CSV=$(jq -r '.privateSubnets | join(",")' outputs.json)
+          PRIVATE_SUBNETS_CSV=$(jq -r '[ to_entries[] | select(.key | startswith("privateSubnet")) | .value ] | join(",")' outputs.json)
           echo "SHARED_VPC_ID=$VPC_ID" >> $GITHUB_ENV
           echo "PRIVATE_SUBNETS=$PRIVATE_SUBNETS_CSV" >> $GITHUB_ENV
 

@@ -169,13 +169,10 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 	}
 
 	return &dto.VpcOut{
-		VpcId:           igw.VpcId,                                   // pulumi.StringOutput
-		PublicSubnets:   pulumi.ToStringArrayOutput(publicSubnets),   // pulumi.StringArrayOutput
-		PrivateSubnets:  pulumi.ToStringArrayOutput(privateSubnets),  // pulumi.StringArrayOutput
-		IsolatedSubnets: pulumi.ToStringArrayOutput(isolatedSubnets), // pulumi.StringArrayOutput
-		PublicCidrs:     publicCidrs,
-		PrivateCidrs:    privateCidrs,
-		IsolatedCidrs:   isolatedCidrs,
+		VpcId:           igw.VpcId,              // pulumi.StringOutput
+		PublicSubnets:   publicSubnets,          // pulumi.StringArrayOutput
+		PrivateSubnets:  privateSubnets,         // pulumi.StringArrayOutput
+		IsolatedSubnets: isolatedSubnets,        // pulumi.StringArrayOutput
 		InternetGateway: igw.Arn,                // pulumi.StringOutput
 		NatGateway:      nat.NetworkInterfaceId, // pulumi.StringOutput
 	}, nil
