@@ -114,7 +114,7 @@ func CreateElasticLoadBalancers(ctx *pulumi.Context, baseName string, env envs.E
 
 	albListener, err := lb.NewListener(ctx, "main_alb_listener", &lb.ListenerArgs{
 		LoadBalancerArn: alb.Arn,
-		Port:            pulumi.Int(in.AlbListenerPort),
+		Port:            pulumi.Int(in.NlbTgPort),
 		Protocol:        pulumi.String(in.AlbListenerProtocol),
 		CertificateArn:  cert,
 		SslPolicy:       sslPolicy,
