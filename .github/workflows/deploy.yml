@@ -74,14 +74,14 @@ jobs:
       - name: Select or create stack - Network Infrastructure
         run: |
           cd network
-          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_network || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_network
+          pulumi stack select organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }}
           pulumi stack --show-urns
 
       - name: Pulumi up - Network Infrastructure
         run: |
           cd network
           pulumi refresh --yes
-          pulumi up --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_network --yes
+          pulumi up --stack organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }} --yes
 
       - name: Get Pulumi Output - Network Infrastructure
         id: pulumi_outputs
@@ -96,11 +96,11 @@ jobs:
       - name: Select or create stack - Load Balancer Infrastructure
         run: |
           cd load_balancer
-          pulumi stack select organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_load_balancer || pulumi stack init organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_load_balancer
+          pulumi stack select organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }}
           pulumi stack --show-urns
 
       - name: Pulumi up - Load Balancer Infrastructure
         run: |
           cd load_balancer
           pulumi refresh --yes
-          pulumi up --stack organization/${{ env.VAR_project_prefix }}/${{ env.VAR_env }}/shared_load_balancer --yes
+          pulumi up --stack organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }} --yes
