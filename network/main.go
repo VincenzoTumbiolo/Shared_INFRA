@@ -30,7 +30,9 @@ func deploy(ctx *pulumi.Context) error {
 		return err
 	}
 	ctx.Export("vpcId", res.VpcId)
-	ctx.Export("privateSubnetsString", res.PrivateSubnets)
+	for i, sub := range res.PrivateSubnets {
+		ctx.Export(fmt.Sprintf("privateSubnet%d", i), sub)
+	}
 	fmt.Println("End deploy")
 
 	return nil

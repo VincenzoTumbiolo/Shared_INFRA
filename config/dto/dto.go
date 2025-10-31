@@ -16,12 +16,9 @@ const (
 
 type VpcOut struct {
 	VpcId           pulumi.StringOutput
-	PublicSubnets   pulumi.StringArrayOutput
-	PrivateSubnets  pulumi.StringArrayOutput
-	IsolatedSubnets pulumi.StringArrayOutput
-	PublicCidrs     []string
-	PrivateCidrs    []string
-	IsolatedCidrs   []string
+	PublicSubnets   []pulumi.StringOutput
+	PrivateSubnets  []pulumi.StringOutput
+	IsolatedSubnets []pulumi.StringOutput
 	InternetGateway pulumi.StringOutput
 	NatGateway      pulumi.StringOutput
 }

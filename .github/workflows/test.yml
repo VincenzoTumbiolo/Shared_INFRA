@@ -74,7 +74,7 @@ jobs:
         id: pulumi_outputs
         run: |
           echo "SHARED_VPC_ID=$DEFAULT_VPC_TEST" >> $GITHUB_ENV
-          echo "PRIVATE_SUBNET=$DEFAULT_SUBNET_TEST" >> $GITHUB_ENV
+          echo "PRIVATE_SUBNETS=$DEFAULT_SUBNET_TEST" >> $GITHUB_ENV
 
       - name: Select or create stack - load_balancer
         run: |
