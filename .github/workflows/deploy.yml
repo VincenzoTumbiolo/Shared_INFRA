@@ -85,9 +85,8 @@ jobs:
 
       - name: Get Pulumi Output - Network Infrastructure
         id: pulumi_outputs
-        if: startsWith(github.ref, 'refs/heads/prod')
         run: |
-          cd pulumi-infra
+          cd network
           pulumi stack output --json > outputs.json
           VPC_ID=$(jq -r .vpcId outputs.json)
           PRIVATE_SUBNETS_CSV=$(jq -r '.privateSubnets | join(",")' outputs.json)
