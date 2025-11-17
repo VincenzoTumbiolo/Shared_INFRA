@@ -13,6 +13,7 @@ env:
   GIT_TERMINAL_PROMPT: 1
   PULUMI_BUCKET: vtechstudio-infrastructure-state
   PULUMI_CONFIG_PASSPHRASE: dummy
+  PULUMI_ACTION: destroy
 
 jobs:
   pulumi-deploy:
@@ -99,8 +100,8 @@ jobs:
           pulumi stack select organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }}
           pulumi stack --show-urns
 
-      - name: Pulumi up - Load Balancer Infrastructure
+      - name: Pulumi ${{ env.PULUMI_ACTION }} - Load Balancer Infrastructure
         run: |
           cd load_balancer
           pulumi refresh --yes
-          pulumi up --stack organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }} --yes
+          pulumi ${{ env.PULUMI_ACTION }} --stack organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }} --yes
