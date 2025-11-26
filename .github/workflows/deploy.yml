@@ -78,11 +78,11 @@ jobs:
           pulumi stack select organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }}
           pulumi stack --show-urns
 
-      - name: Pulumi up - Network Infrastructure
+      - name: Pulumi ${{ env.PULUMI_ACTION }} - Network Infrastructure
         run: |
           cd network
           pulumi refresh --yes
-          pulumi up --stack organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }} --yes
+          pulumi ${{ env.PULUMI_ACTION }} --stack organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }} --yes
 
       - name: Get Pulumi Output - Network Infrastructure
         id: pulumi_outputs
