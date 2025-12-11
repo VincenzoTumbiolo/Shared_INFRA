@@ -13,7 +13,7 @@ env:
   GIT_TERMINAL_PROMPT: 1
   PULUMI_BUCKET: vtechstudio-infrastructure-state
   PULUMI_CONFIG_PASSPHRASE: dummy
-  PULUMI_ACTION: destroy
+  PULUMI_ACTION: up
 
 jobs:
   pulumi-deploy:
@@ -78,30 +78,30 @@ jobs:
           pulumi stack select organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }}
           pulumi stack --show-urns
 
-      - name: Pulumi up - Network Infrastructure
+      - name: Pulumi ${{ env.PULUMI_ACTION }} - Network Infrastructure
         run: |
           cd network
           pulumi refresh --yes
-          pulumi up --stack organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }} --yes
+          pulumi ${{ env.PULUMI_ACTION }} --stack organization/${{ env.VAR_project_prefix }}_network/${{ env.VAR_env }} --yes
 
-      - name: Get Pulumi Output - Network Infrastructure
-        id: pulumi_outputs
-        run: |
-          cd network
-          pulumi stack output --json > outputs.json
-          VPC_ID=$(jq -r .vpcId outputs.json)
-          PRIVATE_SUBNETS_CSV=$(jq -r '[ to_entries[] | select(.key | startswith("privateSubnet")) | .value ] | join(",")' outputs.json)
-          echo "SHARED_VPC_ID=$VPC_ID" >> $GITHUB_ENV
-          echo "PRIVATE_SUBNETS=$PRIVATE_SUBNETS_CSV" >> $GITHUB_ENV
+      # - name: Get Pulumi Output - Network Infrastructure
+      #   id: pulumi_outputs
+      #   run: |
+      #     cd network
+      #     pulumi stack output --json > outputs.json
+      #     VPC_ID=$(jq -r .vpcId outputs.json)
+      #     PRIVATE_SUBNETS_CSV=$(jq -r '[ to_entries[] | select(.key | startswith("privateSubnet")) | .value ] | join(",")' outputs.json)
+      #     echo "SHARED_VPC_ID=$VPC_ID" >> $GITHUB_ENV
+      #     echo "PRIVATE_SUBNETS=$PRIVATE_SUBNETS_CSV" >> $GITHUB_ENV
 
-      - name: Select or create stack - Load Balancer Infrastructure
-        run: |
-          cd load_balancer
-          pulumi stack select organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }}
-          pulumi stack --show-urns
+      # - name: Select or create stack - Load Balancer Infrastructure
+      #   run: |
+      #     cd load_balancer
+      #     pulumi stack select organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }} || pulumi stack init organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }}
+      #     pulumi stack --show-urns
 
-      - name: Pulumi ${{ env.PULUMI_ACTION }} - Load Balancer Infrastructure
-        run: |
-          cd load_balancer
-          pulumi refresh --yes
-          pulumi ${{ env.PULUMI_ACTION }} --stack organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }} --yes
+      # - name: Pulumi ${{ env.PULUMI_ACTION }} - Load Balancer Infrastructure
+      #   run: |
+      #     cd load_balancer
+      #     pulumi refresh --yes
+      #     pulumi ${{ env.PULUMI_ACTION }} --stack organization/${{ env.VAR_project_prefix }}_load_balancer/${{ env.VAR_env }} --yes

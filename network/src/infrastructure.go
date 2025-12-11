@@ -6,7 +6,7 @@ import (
 	vtech_aws "github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/modules/aws"
 	"github.com/VincenzoTumbiolo/Shared_INFRA_config/dto"
 	"github.com/VincenzoTumbiolo/Shared_INFRA_config/envs"
-	"github.com/VincenzoTumbiolo/Shared_INFRA_network/src/network"
+	"github.com/VincenzoTumbiolo/Shared_INFRA_network/src/core"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -14,7 +14,7 @@ import (
 func Infrastructure(ctx *pulumi.Context, mod *vtech_aws.AWSModule, env envs.Environments) (*dto.VpcOut, error) {
 	baseName := fmt.Sprintf("%s-%s", env.Env, env.ProjectPrefix)
 
-	vpc, err := network.NewNetwork(ctx, mod, baseName, "10.10", "16", "24")
+	vpc, err := core.NewNetwork(ctx, mod, baseName, "10.10", "16", "24")
 	if err != nil {
 		return nil, err
 	}
