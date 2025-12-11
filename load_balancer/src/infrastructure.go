@@ -8,7 +8,7 @@ import (
 	vtech_aws_dto "github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/dto/aws"
 	vtech_aws "github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/modules/aws"
 	"github.com/VincenzoTumbiolo/Shared_INFRA_config/envs"
-	"github.com/VincenzoTumbiolo/Shared_INFRA_load_balancer/src/load_balancer"
+	"github.com/VincenzoTumbiolo/Shared_INFRA_load_balancer/src/core"
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
@@ -30,7 +30,7 @@ func Infrastructure(ctx *pulumi.Context, mod *vtech_aws.AWSModule, env envs.Envi
 		return err
 	}
 
-	_, err = load_balancer.CreateElasticLoadBalancers(ctx, baseName, env, mod.DefaultTags, vpc, vtech_aws_dto.ElbModuleInput{
+	_, err = core.CreateElasticLoadBalancers(ctx, baseName, env, mod.DefaultTags, vpc, vtech_aws_dto.ElbModuleInput{
 		Env:                     env.Env,
 		ProjectPrefix:           env.ProjectPrefix,
 		PrivateSubnetIds:        strings.Split(env.PrivateSubnetIds, ","),
