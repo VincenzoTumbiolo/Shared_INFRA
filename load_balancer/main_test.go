@@ -1,4 +1,4 @@
-package load_balancer
+package main
 
 import (
 	"log"
