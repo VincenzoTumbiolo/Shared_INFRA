@@ -1,4 +1,4 @@
-package load_balancer
+package connection
 
 import (
 	"fmt"
@@ -7,9 +7,9 @@ import (
 	"github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/aws/load_balancer"
 	"github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/aws/s3"
 
+	"shared_infra/core/dto"
+
 	vtech_network "github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/aws/network"
-	"github.com/VincenzoTumbiolo/Shared_INFRA_config/dto"
-	"github.com/VincenzoTumbiolo/Shared_INFRA_config/envs"
 
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/apigateway"
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/ec2"
@@ -20,12 +20,12 @@ import (
 
 // ====== Modulo principale ======
 
-func CreateElasticLoadBalancers(ctx *pulumi.Context, baseName string, env envs.Environments, defaultTags pulumi.StringMapInput, vpc *ec2.LookupVpcResult, in vtech_aws_dto.ElbModuleInput) (*dto.ElbModuleResources, error) {
+func CreateElasticLoadBalancers(ctx *pulumi.Context, baseName string, env dto.Environments, defaultTags pulumi.StringMapInput, vpc *ec2.LookupVpcResult, in vtech_aws_dto.ElbModuleInput) (*dto.ElbModuleResources, error) {
 
 	sgName := fmt.Sprintf("%s-lb-sg", baseName)
 
 	sg, err := vtech_network.CreateSecurityGroup(ctx, sgName, vtech_aws_dto.SecurityGroupArgs{
-		VpcID: &env.VpcId,
+		VpcID: &in.VpcId,
 		Ingress: []vtech_aws_dto.SecurityGroupRule{
 			{
 				Protocol:    "TCP",

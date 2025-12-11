@@ -14,6 +14,7 @@ type Environments struct {
 	Env           string `env:"VAR_env" default:"dev"`
 	Region        string `env:"VAR_region" default:"eu-central-1"`
 	AccountId     string `env:"VAR_account_id"`
+	PulumiAction  string `env:"VAR_pulumi_action" default:"preview"`
 
 	//LOAD BALANCER
 	AlbListenerPort         int    `env:"VAR_albListenerPort" default:"443"`

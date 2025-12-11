@@ -1,11 +1,13 @@
-package network
+package vpc
 
 import (
 	"fmt"
 
+	"shared_infra/core/dto"
+	"shared_infra/core/tags"
+
 	vtech_aws "github.com/VincenzoTumbiolo/Infra-PlumiCommons-Package/infrastructure/services/modules/aws"
-	"github.com/VincenzoTumbiolo/Shared_INFRA_config/dto"
-	"github.com/VincenzoTumbiolo/Shared_INFRA_config/tags"
+
 	"github.com/pulumi/pulumi-aws/sdk/v7/go/aws/ec2"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
