@@ -14,13 +14,20 @@ const (
 	Isolated SubnetVisibility = "Isolated"
 )
 
+type VpcInput struct {
+	BaseNetwork        string
+	RangeNetwork       string
+	SubnetRangeNetwork string
+	EnableNAT          bool
+}
+
 type VpcOut struct {
 	VpcId           pulumi.StringOutput
 	PublicSubnets   []pulumi.StringOutput
 	PrivateSubnets  []pulumi.StringOutput
 	IsolatedSubnets []pulumi.StringOutput
 	InternetGateway pulumi.StringOutput
-	NatGateway      pulumi.StringOutput
+	NatGateway      *pulumi.StringOutput
 }
 
 type ElbModuleInput struct {
