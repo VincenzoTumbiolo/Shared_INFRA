@@ -14,7 +14,12 @@ import (
 func Infrastructure(ctx *pulumi.Context, mod *vtech_aws.AWSModule, env envs.Environments) (*dto.VpcOut, error) {
 	baseName := fmt.Sprintf("%s-%s", env.Env, env.ProjectPrefix)
 
-	vpc, err := core.NewNetwork(ctx, mod, baseName, "10.10", "16", "24")
+	vpc, err := core.NewNetwork(ctx, mod, baseName, dto.VpcInput{
+		BaseNetwork:        "10.10",
+		RangeNetwork:       "16",
+		SubnetRangeNetwork: "24",
+		EnableNAT:          false,
+	})
 	if err != nil {
 		return nil, err
 	}
