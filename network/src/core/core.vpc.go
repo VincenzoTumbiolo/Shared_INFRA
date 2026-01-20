@@ -89,7 +89,7 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 			return nil, err
 		}
 	}
-	var nat *ec2.NatGateway
+	var networkInterfaceId *pulumi.StringOutput
 
 	if input.EnableNAT {
 		// --- EIP + NAT per private subnets ---
@@ -112,6 +112,7 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 		if err != nil {
 			return nil, err
 		}
+		networkInterfaceId = &nat.NetworkInterfaceId
 
 		for i := range azs {
 			// PRIVATE
@@ -171,12 +172,12 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 	}
 
 	return &dto.VpcOut{
-		VpcId:           igw.VpcId,               // pulumi.StringOutput
-		PublicSubnets:   publicSubnets,           // pulumi.StringArrayOutput
-		PrivateSubnets:  privateSubnets,          // pulumi.StringArrayOutput
-		IsolatedSubnets: isolatedSubnets,         // pulumi.StringArrayOutput
-		InternetGateway: igw.Arn,                 // pulumi.StringOutput
-		NatGateway:      &nat.NetworkInterfaceId, // pulumi.StringOutput
+		VpcId:           igw.VpcId,          // pulumi.StringOutput
+		PublicSubnets:   publicSubnets,      // pulumi.StringArrayOutput
+		PrivateSubnets:  privateSubnets,     // pulumi.StringArrayOutput
+		IsolatedSubnets: isolatedSubnets,    // pulumi.StringArrayOutput
+		InternetGateway: igw.Arn,            // pulumi.StringOutput
+		NatGateway:      networkInterfaceId, // pulumi.StringOutput
 	}, nil
 }
 
