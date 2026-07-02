@@ -8,6 +8,7 @@ This directory contains the shared infrastructure components used across the Psy
 
 Shared_INFRA/
 ├── README.md
+├── .gitignore
 └── ...
 
 ## Components
