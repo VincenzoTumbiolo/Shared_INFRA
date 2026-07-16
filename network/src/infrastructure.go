@@ -18,7 +18,7 @@ func Infrastructure(ctx *pulumi.Context, mod *vtech_aws.AWSModule, env envs.Envi
 		BaseNetwork:        "10.10",
 		RangeNetwork:       "16",
 		SubnetRangeNetwork: "24",
-		EnableNAT:          true,
+		EnableNAT:          false,
 	})
 	if err != nil {
 		return nil, err
