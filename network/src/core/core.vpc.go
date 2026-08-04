@@ -46,7 +46,7 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 	privateSubnets := []pulumi.StringOutput{}
 	isolatedSubnets := []pulumi.StringOutput{}
 
-	// Route table per public
+	// --- Route Table per Public ---
 	rtPublic, err := ec2.NewRouteTable(ctx, baseName+"-rt-public", &ec2.RouteTableArgs{
 		VpcId: vpc.ID(),
 		Routes: ec2.RouteTableRouteArray{
@@ -63,34 +63,9 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 		return nil, err
 	}
 
-	var networkInterfaceId *pulumi.StringOutput
-	var nat *ec2.NatGateway
-	if input.EnableNAT {
-		// --- EIP + NAT per private subnets ---
-		eip, err := ec2.NewEip(ctx, baseName+"-eip", &ec2.EipArgs{
-			Domain: pulumi.String("vpc"),
-			Tags: pulumi.StringMap{
-				"Name": tags.ServiceNameTag("Eip", baseName),
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-		nat, err := ec2.NewNatGateway(ctx, baseName+"-nat", &ec2.NatGatewayArgs{
-			AllocationId: eip.ID(),
-			SubnetId:     publicSubnets[0],
-			Tags: pulumi.StringMap{
-				"Name": tags.ServiceNameTag("Nat", baseName),
-			},
-		}, pulumi.DependsOn([]pulumi.Resource{igw}))
-		if err != nil {
-			return nil, err
-		}
-		networkInterfaceId = &nat.NetworkInterfaceId
-	}
-
+	// 1. CREAZIONE PUBLIC SUBNETS
+	var firstPublicSubnet *ec2.Subnet
 	for i := range azs {
-		// PUBLIC
 		pub, err := ec2.NewSubnet(ctx, fmt.Sprintf("%s-public-%d", baseName, i+1), &ec2.SubnetArgs{
 			VpcId:               vpc.ID(),
 			CidrBlock:           pulumi.String(publicCidrs[i]),
@@ -106,7 +81,10 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 		}
 		publicSubnets = append(publicSubnets, pub.ID().ToStringOutput())
 
-		// Associa public subnet al route table public
+		if i == 0 {
+			firstPublicSubnet = pub
+		}
+
 		_, err = ec2.NewRouteTableAssociation(ctx, fmt.Sprintf("%s-rtassoc-public-%d", baseName, i+1), &ec2.RouteTableAssociationArgs{
 			RouteTableId: rtPublic.ID(),
 			SubnetId:     pub.ID(),
@@ -114,7 +92,38 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 		if err != nil {
 			return nil, err
 		}
+	}
 
+	// 2. CREAZIONE NAT GATEWAY (Opzionale)
+	var nat *ec2.NatGateway
+	var networkInterfaceId *pulumi.StringOutput
+
+	if input.EnableNAT {
+		eip, err := ec2.NewEip(ctx, baseName+"-eip", &ec2.EipArgs{
+			Domain: pulumi.String("vpc"),
+			Tags: pulumi.StringMap{
+				"Name": tags.ServiceNameTag("Eip", baseName),
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		nat, err = ec2.NewNatGateway(ctx, baseName+"-nat", &ec2.NatGatewayArgs{
+			AllocationId: eip.ID(),
+			SubnetId:     firstPublicSubnet.ID(),
+			Tags: pulumi.StringMap{
+				"Name": tags.ServiceNameTag("Nat", baseName),
+			},
+		}, pulumi.DependsOn([]pulumi.Resource{igw}))
+		if err != nil {
+			return nil, err
+		}
+		networkInterfaceId = &nat.NetworkInterfaceId
+	}
+
+	// 3. CREAZIONE PRIVATE ED ISOLATED SUBNETS
+	for i := range azs {
 		// PRIVATE
 		priv, err := ec2.NewSubnet(ctx, fmt.Sprintf("%s-private-%d", baseName, i+1), &ec2.SubnetArgs{
 			VpcId:            vpc.ID(),
@@ -130,19 +139,18 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 		}
 		privateSubnets = append(privateSubnets, priv.ID().ToStringOutput())
 
-		var natId *pulumi.IDOutput = nil
-		if input.EnableNAT {
-			tmp := nat.ID()
-			natId = &tmp
+		// Rotte per la Private Route Table: aggiunge la rotta verso NAT solo se EnableNAT è vero
+		routes := ec2.RouteTableRouteArray{}
+		if input.EnableNAT && nat != nil {
+			routes = append(routes, ec2.RouteTableRouteArgs{
+				CidrBlock:    pulumi.String("0.0.0.0/0"),
+				NatGatewayId: nat.ID(),
+			})
 		}
+
 		rtPriv, err := ec2.NewRouteTable(ctx, fmt.Sprintf("%s-rt-private-%d", baseName, i+1), &ec2.RouteTableArgs{
-			VpcId: vpc.ID(),
-			Routes: ec2.RouteTableRouteArray{
-				ec2.RouteTableRouteArgs{
-					CidrBlock:    pulumi.String("0.0.0.0/0"),
-					NatGatewayId: natId,
-				},
-			},
+			VpcId:  vpc.ID(),
+			Routes: routes,
 			Tags: pulumi.StringMap{
 				"Name": tags.ServiceNameTag(fmt.Sprintf("PrivateRt%d", i+1), baseName),
 			},
@@ -159,7 +167,7 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 			return nil, err
 		}
 
-		// ISOLATED
+		// ISOLATED (Nessuna rotta esterna, usa la tabella di default senza Internet/NAT)
 		iso, err := ec2.NewSubnet(ctx, fmt.Sprintf("%s-isolated-%d", baseName, i+1), &ec2.SubnetArgs{
 			VpcId:            vpc.ID(),
 			CidrBlock:        pulumi.String(isolatedCidrs[i]),
@@ -176,12 +184,12 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 	}
 
 	return &dto.VpcOut{
-		VpcId:           igw.VpcId,          // pulumi.StringOutput
-		PublicSubnets:   publicSubnets,      // pulumi.StringArrayOutput
-		PrivateSubnets:  privateSubnets,     // pulumi.StringArrayOutput
-		IsolatedSubnets: isolatedSubnets,    // pulumi.StringArrayOutput
-		InternetGateway: igw.Arn,            // pulumi.StringOutput
-		NatGateway:      networkInterfaceId, // pulumi.StringOutput
+		VpcId:           vpc.ID().ToStringOutput(),
+		PublicSubnets:   publicSubnets,
+		PrivateSubnets:  privateSubnets,
+		IsolatedSubnets: isolatedSubnets,
+		InternetGateway: igw.Arn,
+		NatGateway:      networkInterfaceId,
 	}, nil
 }
 
