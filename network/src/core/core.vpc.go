@@ -63,6 +63,32 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 		return nil, err
 	}
 
+	var networkInterfaceId *pulumi.StringOutput
+	var nat *ec2.NatGateway
+	if input.EnableNAT {
+		// --- EIP + NAT per private subnets ---
+		eip, err := ec2.NewEip(ctx, baseName+"-eip", &ec2.EipArgs{
+			Domain: pulumi.String("vpc"),
+			Tags: pulumi.StringMap{
+				"Name": tags.ServiceNameTag("Eip", baseName),
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		nat, err := ec2.NewNatGateway(ctx, baseName+"-nat", &ec2.NatGatewayArgs{
+			AllocationId: eip.ID(),
+			SubnetId:     publicSubnets[0],
+			Tags: pulumi.StringMap{
+				"Name": tags.ServiceNameTag("Nat", baseName),
+			},
+		}, pulumi.DependsOn([]pulumi.Resource{igw}))
+		if err != nil {
+			return nil, err
+		}
+		networkInterfaceId = &nat.NetworkInterfaceId
+	}
+
 	for i := range azs {
 		// PUBLIC
 		pub, err := ec2.NewSubnet(ctx, fmt.Sprintf("%s-public-%d", baseName, i+1), &ec2.SubnetArgs{
@@ -88,34 +114,7 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 		if err != nil {
 			return nil, err
 		}
-	}
-	var networkInterfaceId *pulumi.StringOutput
 
-	var nat *ec2.NatGateway
-	if input.EnableNAT {
-		// --- EIP + NAT per private subnets ---
-		eip, err := ec2.NewEip(ctx, baseName+"-eip", &ec2.EipArgs{
-			Domain: pulumi.String("vpc"),
-			Tags: pulumi.StringMap{
-				"Name": tags.ServiceNameTag("Eip", baseName),
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-		nat, err := ec2.NewNatGateway(ctx, baseName+"-nat", &ec2.NatGatewayArgs{
-			AllocationId: eip.ID(),
-			SubnetId:     publicSubnets[0],
-			Tags: pulumi.StringMap{
-				"Name": tags.ServiceNameTag("Nat", baseName),
-			},
-		}, pulumi.DependsOn([]pulumi.Resource{igw}))
-		if err != nil {
-			return nil, err
-		}
-		networkInterfaceId = &nat.NetworkInterfaceId
-	}
-	for i := range azs {
 		// PRIVATE
 		priv, err := ec2.NewSubnet(ctx, fmt.Sprintf("%s-private-%d", baseName, i+1), &ec2.SubnetArgs{
 			VpcId:            vpc.ID(),
@@ -132,7 +131,7 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 		privateSubnets = append(privateSubnets, priv.ID().ToStringOutput())
 
 		var natId *pulumi.IDOutput = nil
-		if input.EnableNAT && nat != nil {
+		if input.EnableNAT {
 			tmp := nat.ID()
 			natId = &tmp
 		}
@@ -141,7 +140,7 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 			Routes: ec2.RouteTableRouteArray{
 				ec2.RouteTableRouteArgs{
 					CidrBlock:    pulumi.String("0.0.0.0/0"),
-					NatGatewayId: *natId,
+					NatGatewayId: natId,
 				},
 			},
 			Tags: pulumi.StringMap{
