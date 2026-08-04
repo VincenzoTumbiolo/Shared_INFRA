@@ -91,6 +91,7 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 	}
 	var networkInterfaceId *pulumi.StringOutput
 
+	var nat *ec2.NatGateway
 	if input.EnableNAT {
 		// --- EIP + NAT per private subnets ---
 		eip, err := ec2.NewEip(ctx, baseName+"-eip", &ec2.EipArgs{
@@ -113,62 +114,66 @@ func NewNetwork(ctx *pulumi.Context, mod *vtech_aws.AWSModule, baseName string, 
 			return nil, err
 		}
 		networkInterfaceId = &nat.NetworkInterfaceId
-
-		for i := range azs {
-			// PRIVATE
-			priv, err := ec2.NewSubnet(ctx, fmt.Sprintf("%s-private-%d", baseName, i+1), &ec2.SubnetArgs{
-				VpcId:            vpc.ID(),
-				CidrBlock:        pulumi.String(privateCidrs[i]),
-				AvailabilityZone: pulumi.String(azs[i]),
-				Tags: pulumi.StringMap{
-					"Name": tags.ServiceNameTag(fmt.Sprintf("PrivateSub%d", i+1), baseName),
-					"Tier": pulumi.String("private"),
-				},
-			})
-			if err != nil {
-				return nil, err
-			}
-			privateSubnets = append(privateSubnets, priv.ID().ToStringOutput())
-
-			rtPriv, err := ec2.NewRouteTable(ctx, fmt.Sprintf("%s-rt-private-%d", baseName, i+1), &ec2.RouteTableArgs{
-				VpcId: vpc.ID(),
-				Routes: ec2.RouteTableRouteArray{
-					ec2.RouteTableRouteArgs{
-						CidrBlock:    pulumi.String("0.0.0.0/0"),
-						NatGatewayId: nat.ID(),
-					},
-				},
-				Tags: pulumi.StringMap{
-					"Name": tags.ServiceNameTag(fmt.Sprintf("PrivateRt%d", i+1), baseName),
-				},
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			_, err = ec2.NewRouteTableAssociation(ctx, fmt.Sprintf("%s-rtassoc-private-%d", baseName, i+1), &ec2.RouteTableAssociationArgs{
-				RouteTableId: rtPriv.ID(),
-				SubnetId:     priv.ID(),
-			})
-			if err != nil {
-				return nil, err
-			}
-
-			// ISOLATED
-			iso, err := ec2.NewSubnet(ctx, fmt.Sprintf("%s-isolated-%d", baseName, i+1), &ec2.SubnetArgs{
-				VpcId:            vpc.ID(),
-				CidrBlock:        pulumi.String(isolatedCidrs[i]),
-				AvailabilityZone: pulumi.String(azs[i]),
-				Tags: pulumi.StringMap{
-					"Name": tags.ServiceNameTag(fmt.Sprintf("IsolatedSub%d", i+1), baseName),
-					"Tier": pulumi.String("isolated"),
-				},
-			})
-			if err != nil {
-				return nil, err
-			}
-			isolatedSubnets = append(isolatedSubnets, iso.ID().ToStringOutput())
+	}
+	for i := range azs {
+		// PRIVATE
+		priv, err := ec2.NewSubnet(ctx, fmt.Sprintf("%s-private-%d", baseName, i+1), &ec2.SubnetArgs{
+			VpcId:            vpc.ID(),
+			CidrBlock:        pulumi.String(privateCidrs[i]),
+			AvailabilityZone: pulumi.String(azs[i]),
+			Tags: pulumi.StringMap{
+				"Name": tags.ServiceNameTag(fmt.Sprintf("PrivateSub%d", i+1), baseName),
+				"Tier": pulumi.String("private"),
+			},
+		})
+		if err != nil {
+			return nil, err
 		}
+		privateSubnets = append(privateSubnets, priv.ID().ToStringOutput())
+
+		var natId *pulumi.IDOutput = nil
+		if input.EnableNAT && nat != nil {
+			tmp := nat.ID()
+			natId = &tmp
+		}
+		rtPriv, err := ec2.NewRouteTable(ctx, fmt.Sprintf("%s-rt-private-%d", baseName, i+1), &ec2.RouteTableArgs{
+			VpcId: vpc.ID(),
+			Routes: ec2.RouteTableRouteArray{
+				ec2.RouteTableRouteArgs{
+					CidrBlock:    pulumi.String("0.0.0.0/0"),
+					NatGatewayId: *natId,
+				},
+			},
+			Tags: pulumi.StringMap{
+				"Name": tags.ServiceNameTag(fmt.Sprintf("PrivateRt%d", i+1), baseName),
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = ec2.NewRouteTableAssociation(ctx, fmt.Sprintf("%s-rtassoc-private-%d", baseName, i+1), &ec2.RouteTableAssociationArgs{
+			RouteTableId: rtPriv.ID(),
+			SubnetId:     priv.ID(),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		// ISOLATED
+		iso, err := ec2.NewSubnet(ctx, fmt.Sprintf("%s-isolated-%d", baseName, i+1), &ec2.SubnetArgs{
+			VpcId:            vpc.ID(),
+			CidrBlock:        pulumi.String(isolatedCidrs[i]),
+			AvailabilityZone: pulumi.String(azs[i]),
+			Tags: pulumi.StringMap{
+				"Name": tags.ServiceNameTag(fmt.Sprintf("IsolatedSub%d", i+1), baseName),
+				"Tier": pulumi.String("isolated"),
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		isolatedSubnets = append(isolatedSubnets, iso.ID().ToStringOutput())
 	}
 
 	return &dto.VpcOut{
